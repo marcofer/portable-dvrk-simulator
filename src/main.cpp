@@ -1,10 +1,17 @@
 // Project includes
 #include "utils.hpp"
+#ifdef WITH_OCULUS
 #include "Oculus.hpp"
+#endif // WITH_OCULUS
+
+#ifdef WITH_GEOMAGIC
 #include "Geomagic.hpp"
+#endif // WITH_GEOMAGIC
 
 // Eigen includes
 #include <Eigen/Dense>
+
+void hapticLoop() {}
 
 void escapeCallback();
 void initLog();
@@ -24,11 +31,11 @@ std::stringstream vcamLSS;				//!< Velocity vector of the left camera of the ECM
 std::stringstream vcamRSS;				//!< Velocity vector of the right camera of the ECM
 
 
-simxInt mainClient;
-simxInt psmLClient;
-simxInt psmRClient;
-simxInt ecmClient;
-simxFloat Ts;
+int mainClient;
+int psmLClient;
+int psmRClient;
+int ecmClient;
+float Ts;
 bool running;
 
 // Log variables
@@ -42,8 +49,9 @@ int main(int argc, char** argv) {
 	bool saveLog = false;
 
 	// Initialize the connected devices
-	std::cout << "Initializing the Geomagic device(s) ..." << std::endl;
+	//std::cout << "Initializing the Geomagic device(s) ..." << std::endl;
 
+#ifndef WITH_ZEROMQ
 	// Initialize the multiple connections with CoppeliaSim
 	std::cout << "Initiliazing the multiple connections with CoppeliaSim ... " << std::endl;
 	mainClient = simxStart("127.0.0.1", 19997, true, true, 5000, 5);
@@ -61,6 +69,10 @@ int main(int argc, char** argv) {
 	simxStartSimulation(mainClient, simx_opmode_blocking);
 	simxGetFloatSignal(mainClient, "Ts", &Ts, simx_opmode_blocking);
 	std::cout << "Simulation time step: " << Ts << std::endl;
+#else
+	RemoteAPIClient client;
+	auto sim = client.getObject().sim();
+#endif // WITH_ZEROMQ
 
 	if (saveLog) {
 		initLog();
@@ -70,20 +82,33 @@ int main(int argc, char** argv) {
 	running = true;
 
 	// Init and launch threads
-	boost::thread_group group;
-	group.create_thread(boost::bind(hapticLoop));
-	//group.create_thread(boost::bind(oculusLoop));
-	
+	std::thread geomagicThread, oculusThread;
+#ifdef WITH_GEOMAGIC
+	geomagicThread = std::thread(&hapticLoop);
+#endif //WITH_GEOMAGIC
+
+#ifdef WITH_OCULUS
+	oculusThread = std::thread(&oculusLoop);
+#endif // WITH_OCULUS
+
 	while (_getch() != 27);
 	running = false;
 
 	// Join threads
-	group.join_all();
+#ifdef WITH_GEOMAGIC
+	geomagicThread.join();
+#endif //WITH_GEOMAGIC
 
+#ifdef WITH_OCULUS
+	oculusThread.join();
+#endif // WITH_OCULUS
+
+#ifndef WITH_ZEROMQ
 	simxStopSimulation(mainClient, simx_opmode_blocking);
 	simxFinish(psmLClient);
 	simxFinish(psmRClient);
 	simxFinish(ecmClient);
+#endif // WITH_ZEROMQ
 
 	if (saveLog) {
 		// Save to file the logged data

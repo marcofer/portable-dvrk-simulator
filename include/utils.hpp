@@ -27,8 +27,7 @@
 #include <direct.h>
 
 // Boost includes
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
+#include <thread>
 
 
 #define _USE_MATH_DEFINES
@@ -43,11 +42,15 @@
 #define SPACE_DIM 3
 
 // V-REP includes
-#include <v_repLib.h>
+//#include <v_repLib.h>
+#ifndef WITH_ZEROMQ
 extern "C" {
 #include <extApi.h>
 #include <extApiPlatform.h>
 }
+#else
+#include "RemoteAPIClient.h"
+#endif // WITH_ZEROMQ
 
 namespace Eigen {
 	
