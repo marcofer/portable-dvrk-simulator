@@ -3,7 +3,7 @@
 void hapticLoop() {
 
 	HHD hapticHandlers[ARMS];
-	simxInt qHandlers[ARMS][PSM_JOINTS_NUM];
+	int qHandlers[ARMS][PSM_JOINTS_NUM];
 	Matrix6f J_be[ARMS];
 	Vector6f q6[ARMS], q6dot[ARMS], q6cmd[ARMS];
 	Vector7f qcmd[ARMS], q[ARMS], qdot[ARMS]; // Vector of joint position taking into account the pair of gripper actuation (J6 = f(q6,q7))
@@ -40,12 +40,16 @@ void hapticLoop() {
 	std::string canHoldSigNames[ARMS] = { "canHoldLeft","canHoldRight" };
 	std::string distTableValNames[ARMS] = { "distTableLVal","distTableRVal" };
 	std::string RCMNames[ARMS] = { "RCM_PSM1","RCM_PSM2" };
-	simxInt RCMHandlers[ARMS];
-	simxInt canHoldVal[ARMS];
-	simxFloat eulAng[ARMS][ANG_VEL_DIM];
-	simxFloat toolLV[ARMS][3];
-	simxFloat toolAV[ARMS][3];
-	simxInt csClients[ARMS];
+	int RCMHandlers[ARMS];
+	int canHoldVal[ARMS];
+	float eulAng[ARMS][ANG_VEL_DIM];
+	float toolLV[ARMS][3];
+	float toolAV[ARMS][3];
+#ifndef WITH_ZMQ
+	int csClients[ARMS];
+#else
+	auto csClient[ARMS];
+#endif
 	float vmax = 2.5;
 	float wmax = 2.5;
 	float Kd = 20;
@@ -85,8 +89,13 @@ void hapticLoop() {
 	geoState[ARM_SIDE::RIGHT].hipVelocity.setZero();
 
 	// Assign the CoppeliaSim clients
+#ifndef WITH_ZMQ
 	csClients[ARM_SIDE::LEFT] = psmLClient;
 	csClients[ARM_SIDE::RIGHT] = psmRClient;
+#else
+	csClients[ARM_SIDE::LEFT] = psmLsim;
+	csClients[ARM_SIDE::RIGHT] = psmRsim;
+#endif
 
 	// Get the clock rate
 	//QueryPerformanceFrequency(&rate);
@@ -159,22 +168,32 @@ void hapticLoop() {
 	// Initialize joint names
 	for (int i = 0; i < ARMS; i++) {
 
-#ifdef TEST
-		// Get the handlers of the V-REP 
-		simxGetObjectHandle(clientID, (blockNames[i]).c_str(), &blocksH[i], simx_opmode_blocking);
+		#ifndef WITH_ZMQ
+			// Get Handlers of the RCM objects
+			simxGetObjectHandle(csClients[i], RCMNames[i].c_str(), &RCMHandlers[i], simx_opmode_blocking);
+
+			// Enable streaming to get the orientation of the RCM of the PSM
+			simxGetObjectOrientation(csClients[i], RCMHandlers[i], -1, eulAng[i], simx_opmode_streaming);
+
+			// Enable streaming to get the distances of grippers from tables
+			simxGetFloatSignal(csClients[i], distTableValNames[i].c_str(), &distTableVal[i], simx_opmode_streaming);
+
+			// Enable streaming to read the signal stating if you can hold something
+			simxGetIntegerSignal(csClients[i], canHoldSigNames[i].c_str(), &canHoldVal[i], simx_opmode_streaming);
+#else
+			// Get Handlers of the RCM objects
+			RCMHandlers[i]=csClient[i].getObject(RCMNames[i].c_str());
+
+			// Enable streaming to get the orientation of the RCM of the PSM
+			eulAng[i] = csClients[i].getObjectOrientation(RCMHandlers[i], -1);
+
+			// Enable streaming to get the distances of grippers from tables
+			distTableVal[i] = csClient[i].getFloatProperty((std::string("signal.")+distTableValNames[i]).c_str());
+
+			// Enable streaming to read the signal stating if you can hold something
+			simxGetIntegerSignal(csClients[i], canHoldSigNames[i].c_str(), &canHoldVal[i], simx_opmode_streaming);
 #endif
 
-		// Get Handlers of the RCM objects
-		simxGetObjectHandle(csClients[i], RCMNames[i].c_str(), &RCMHandlers[i], simx_opmode_blocking);
-
-		// Enable streaming to get the orientation of the RCM of the PSM
-		simxGetObjectOrientation(csClients[i], RCMHandlers[i], -1, eulAng[i], simx_opmode_streaming);
-
-		// Enable streaming to get the distances of grippers from tables
-		simxGetFloatSignal(csClients[i], distTableValNames[i].c_str(), &distTableVal[i], simx_opmode_streaming);
-
-		// Enable streaming to read the signal stating if you can hold something
-		simxGetIntegerSignal(csClients[i], canHoldSigNames[i].c_str(), &canHoldVal[i], simx_opmode_streaming);
 
 		// Initialize chai3d data structures
 		hipPos[i].setZero();

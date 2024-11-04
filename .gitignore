@@ -1,0 +1,7 @@
+build
+Debug
+Release
+out
+x64
+.vs
+*.txt

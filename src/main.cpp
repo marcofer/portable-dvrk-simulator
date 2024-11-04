@@ -31,12 +31,24 @@ std::stringstream vcamLSS;				//!< Velocity vector of the left camera of the ECM
 std::stringstream vcamRSS;				//!< Velocity vector of the right camera of the ECM
 
 
-int mainClient;
-int psmLClient;
-int psmRClient;
-int ecmClient;
-float Ts;
-bool running;
+#ifndef WITH_ZEROMQ
+	int mainClient;
+	int psmLClient;
+	int psmRClient;
+	int ecmClient;
+#else
+	RemoteAPIClient mainClient;
+	RemoteAPIClient psmLClient;
+	RemoteAPIClient psmRClient;
+	RemoteAPIClient ecmClient;
+	auto mainsim;
+	auto psmLsim;
+	auto psmRsim;
+	auto ecmsim;
+#endif
+
+	float Ts;
+	bool running;
 
 // Log variables
 char curDirAndFile[1024];
@@ -70,8 +82,14 @@ int main(int argc, char** argv) {
 	simxGetFloatSignal(mainClient, "Ts", &Ts, simx_opmode_blocking);
 	std::cout << "Simulation time step: " << Ts << std::endl;
 #else
-	RemoteAPIClient client;
-	auto sim = client.getObject().sim();
+	mainsim = mainClient.getObject().sim();
+	psmLsim = psmLClient.getObject().sim();
+	psmRsim = psmRClient.getObject().sim();
+	ecmsim = ecmClient.getObject().sim();
+
+	mainsim.startSimulation();
+	Ts = mainsim.getSimulationTimeStep();
+	std::cout << "Simulation time step: " << Ts << std::endl;
 #endif // WITH_ZEROMQ
 
 	if (saveLog) {
@@ -108,6 +126,8 @@ int main(int argc, char** argv) {
 	simxFinish(psmLClient);
 	simxFinish(psmRClient);
 	simxFinish(ecmClient);
+#else
+	mainsim.stopSimulation(true);
 #endif // WITH_ZEROMQ
 
 	if (saveLog) {
