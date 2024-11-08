@@ -446,12 +446,20 @@ void hapticLoop() {
 				//simxSetJointPosition(clientID, qHandlers[i][j], qcmd[i](j), simx_opmode_oneshot);
 
 				// Send joint velocity data to V-REP
-				simxSetFloatSignal(csClients[i], qdotSigNames[i][j].c_str(), q6dot[i](j), simx_opmode_oneshot);
+				#ifndef WITH_ZMQ
+					simxSetFloatSignal(csClients[i], qdotSigNames[i][j].c_str(), q6dot[i](j), simx_opmode_oneshot);
+				#else
+					csClients[i].setFloatProperty((std::string("signal.") + qdotSigNames[i][j]).c_str(), q6dot[i](j));
+				#endif
 			}
 
 			// Send Cartesian velocity data to V-REP
 			for (int j = 0; j < VEL_DIM; j++) {
-				simxSetFloatSignal(csClients[i], velSigNames[i][j].c_str(), gripperVel2[i](j), simx_opmode_oneshot);
+				#ifndef WITH_ZMQ
+					simxSetFloatSignal(csClients[i], velSigNames[i][j].c_str(), gripperVel2[i](j), simx_opmode_oneshot);
+				#else
+					csClients[i].setFloatProperty((std::string("signal.") + velSigNames[i][j]).c_str(), gripperVel2[i](j));
+				#endif
 			}
 
 			// Set the Cartesian force vector to be applied by the Geomagic Touch interface

@@ -2,6 +2,7 @@ build
 Debug
 Release
 out
+.vscode
 x64
 .vs
 *.txt
