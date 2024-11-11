@@ -187,10 +187,11 @@ void hapticLoop() {
 			eulAng[i] = cssim.getObjectOrientation(RCMHandlers[i], -1);
 
 			// Enable streaming to get the distances of grippers from tables
-			distTableVal[i] = cssim.getFloatProperty(cssim.handle_scene, (std::string("signal.")+distTableValNames[i]).c_str());
+			//distTableVal[i] = cssim.getFloatProperty(cssim.handle_scene, (std::string("signal.")+distTableValNames[i]).c_str());
+			distTableVal[i] = cssim.getFloatSignal(distTableValNames[i].c_str());
 
 			// Enable streaming to read the signal stating if you can hold something
-			canHoldVal[i] = cssim.getIntProperty(cssim.handle_scene, (std::string("signal.") + canHoldSigNames[i]).c_str());
+			canHoldVal[i] = cssim.getInt32Signal(canHoldSigNames[i].c_str());
 		#endif
 
 
@@ -356,7 +357,8 @@ void hapticLoop() {
 			simxSetIntegerSignal(csClients[i], gripHoldSigNames[i].c_str(), holdButton, simx_opmode_oneshot);
 		#else
 			// Enable streaming to read the signal stating if you can hold something
-			canHoldVal[i] = cssim.getIntProperty(cssim.handle_scene, (std::string("signal.") + canHoldSigNames[i]).c_str());
+			//canHoldVal[i] = cssim.getIntProperty(cssim.handle_scene, (std::string("signal.") + canHoldSigNames[i]).c_str());
+			canHoldVal[i] = cssim.getIntSignal(canHoldSigNames[i].c_str());
 
 			// Read the V-REP buffer to get the Euler angles expressing the orientation of the RCM wrt the world frame of V-REP
 			eulAng[i] = cssim.getObjectOrientation(RCMHandlers[i], -1); 
@@ -368,7 +370,8 @@ void hapticLoop() {
 			//nb[i] = (Rwb[i]).row(2);
 
 			// Send Gripper hold state on V-REP
-			cssim.setIntegerProperty((std::string("signal.") + gripHoldSigNames[i]).c_str(), holdButton);
+			//cssim.setIntegerProperty(cssim.handle_scene, (std::string("signal.") + gripHoldSigNames[i]).c_str(), holdButton);
+			cssim.setInt32Signal(gripHoldSigNames[i].c_str(), holdButton);
 		#endif
 			// Get position
 			hipPos[i] = geoState[i].hipPosition.cast<double>();
@@ -448,7 +451,8 @@ void hapticLoop() {
 				#ifndef WITH_ZEROMQ
 					simxSetFloatSignal(csClients[i], qdotSigNames[i][j].c_str(), q6dot[i](j), simx_opmode_oneshot);
 				#else
-					cssim.setFloatProperty((std::string("signal.") + qdotSigNames[i][j]).c_str(), q6dot[i](j));
+					//cssim.setFloatProperty(cssim.handle_scene, (std::string("signal.") + qdotSigNames[i][j]).c_str(), q6dot[i](j));
+					cssim.setFloatSignal(qdotSigNames[i][j].c_str(), q6dot[i](j));
 				#endif
 			}
 
@@ -457,7 +461,8 @@ void hapticLoop() {
 				#ifndef WITH_ZEROMQ
 					simxSetFloatSignal(csClients[i], velSigNames[i][j].c_str(), gripperVel2[i](j), simx_opmode_oneshot);
 				#else
-					cssim.setFloatProperty((std::string("signal.") + velSigNames[i][j]).c_str(), gripperVel2[i](j));
+					//cssim.setFloatProperty(cssim.handle_scene, (std::string("signal.") + velSigNames[i][j]).c_str(), gripperVel2[i](j));
+					cssim.setFloatSignal(velSigNames[i][j].c_str(), gripperVel2[i](j));
 				#endif
 			}
 
