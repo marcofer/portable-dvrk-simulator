@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
 	simxGetFloatSignal(mainClient, "Ts", &Ts, simx_opmode_blocking);
 	std::cout << "Simulation time step: " << Ts << std::endl;
 #else
-	mainsim = mainClient.getObject().sim();
+	auto mainsim = mainClient.getObject().sim();
 
 	mainsim.startSimulation();
 	Ts = mainsim.getSimulationTimeStep();
