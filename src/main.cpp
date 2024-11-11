@@ -164,7 +164,7 @@ void initLog() {
 	path += "/plot";
 
 	std::ifstream seqFileIn;
-	seqFileIn.open("sequeceFile.txt", std::ios::in);
+	seqFileIn.open("sequenceFile.txt", std::ios::in);
 
 	if (seqFileIn.is_open())
 	{

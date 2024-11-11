@@ -45,7 +45,7 @@ void hapticLoop() {
 	float eulAng[ARMS][ANG_VEL_DIM];
 	float toolLV[ARMS][3];
 	float toolAV[ARMS][3];
-#ifndef WITH_ZMQ
+#ifndef WITH_ZEROMQ
 	int csClients[ARMS];
 #else
 	auto csClient[ARMS];
@@ -89,7 +89,7 @@ void hapticLoop() {
 	geoState[ARM_SIDE::RIGHT].hipVelocity.setZero();
 
 	// Assign the CoppeliaSim clients
-#ifndef WITH_ZMQ
+#ifndef WITH_ZEROMQ
 	csClients[ARM_SIDE::LEFT] = psmLClient;
 	csClients[ARM_SIDE::RIGHT] = psmRClient;
 #else
@@ -168,7 +168,7 @@ void hapticLoop() {
 	// Initialize joint names
 	for (int i = 0; i < ARMS; i++) {
 
-		#ifndef WITH_ZMQ
+		#ifndef WITH_ZEROMQ
 			// Get Handlers of the RCM objects
 			simxGetObjectHandle(csClients[i], RCMNames[i].c_str(), &RCMHandlers[i], simx_opmode_blocking);
 
@@ -219,7 +219,7 @@ void hapticLoop() {
 
 		for (int j = 0; j < PSM_JOINTS_NUM; j++) {
 
-#ifndef WITH_ZMQ
+#ifndef WITH_ZEROMQ
 
 			//Retrieve PSM-i joint handlers
 			simxGetObjectHandle(csClients[i], qNames[i][j].c_str(), &qHandlers[i][j], simx_opmode_blocking);
@@ -340,7 +340,7 @@ void hapticLoop() {
 			// -- better with hard-coded value 
 			float z_table = -0.136;
 			//simxGetFloatSignal(csClients[i], distTableValNames[i].c_str(), &distTableVal[i], simx_opmode_buffer);
-		#ifndef WITH_ZMQ
+		#ifndef WITH_ZEROMQ
 			// Enable streaming to read the signal stating if you can hold something
 			simxGetIntegerSignal(csClients[i], canHoldSigNames[i].c_str(), &canHoldVal[i], simx_opmode_buffer);
 
@@ -395,7 +395,7 @@ void hapticLoop() {
 			for (int j = 0; j < PSM_JOINTS_NUM; j++) {
 
 				// Get the PSM-i joint position from the V-REP buffer
-#ifndef WITH_ZMQ
+#ifndef WITH_ZEROMQ
 				simxGetJointPosition(csClients[i], qHandlers[i][j], &q[i](j), simx_opmode_oneshot);
 #else
 				q[i](j) = csClients[i].getJointPosition(qHandlers[i][j]);
@@ -446,7 +446,7 @@ void hapticLoop() {
 				//simxSetJointPosition(clientID, qHandlers[i][j], qcmd[i](j), simx_opmode_oneshot);
 
 				// Send joint velocity data to V-REP
-				#ifndef WITH_ZMQ
+				#ifndef WITH_ZEROMQ
 					simxSetFloatSignal(csClients[i], qdotSigNames[i][j].c_str(), q6dot[i](j), simx_opmode_oneshot);
 				#else
 					csClients[i].setFloatProperty((std::string("signal.") + qdotSigNames[i][j]).c_str(), q6dot[i](j));
@@ -455,7 +455,7 @@ void hapticLoop() {
 
 			// Send Cartesian velocity data to V-REP
 			for (int j = 0; j < VEL_DIM; j++) {
-				#ifndef WITH_ZMQ
+				#ifndef WITH_ZEROMQ
 					simxSetFloatSignal(csClients[i], velSigNames[i][j].c_str(), gripperVel2[i](j), simx_opmode_oneshot);
 				#else
 					csClients[i].setFloatProperty((std::string("signal.") + velSigNames[i][j]).c_str(), gripperVel2[i](j));
