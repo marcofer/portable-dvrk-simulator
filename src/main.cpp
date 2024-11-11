@@ -38,13 +38,6 @@ std::stringstream vcamRSS;				//!< Velocity vector of the right camera of the EC
 	int ecmClient;
 #else
 	RemoteAPIClient mainClient;
-	RemoteAPIClient psmLClient;
-	RemoteAPIClient psmRClient;
-	RemoteAPIClient ecmClient;
-	auto mainsim;
-	auto psmLsim;
-	auto psmRsim;
-	auto ecmsim;
 #endif
 
 	float Ts;
@@ -83,9 +76,6 @@ int main(int argc, char** argv) {
 	std::cout << "Simulation time step: " << Ts << std::endl;
 #else
 	mainsim = mainClient.getObject().sim();
-	psmLsim = psmLClient.getObject().sim();
-	psmRsim = psmRClient.getObject().sim();
-	ecmsim = ecmClient.getObject().sim();
 
 	mainsim.startSimulation();
 	Ts = mainsim.getSimulationTimeStep();
