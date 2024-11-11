@@ -93,7 +93,7 @@ void hapticLoop() {
 	csClients[ARM_SIDE::LEFT] = psmLClient;
 	csClients[ARM_SIDE::RIGHT] = psmRClient;
 #else
-	auto cssim = csClient.getObject().sim()
+	auto cssim = csClient.getObject().sim();
 #endif
 
 	// Get the clock rate
